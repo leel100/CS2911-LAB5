@@ -1,7 +1,7 @@
 """
 - CS2911 - 022
 - Fall 2018
-- Lab 5 - HTTP Client
+- Lab 5
 - Names:
   - Joe Casper
   - Lauren Lee
@@ -26,9 +26,8 @@ def main():
 
     # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/','index.html')
-
+    
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
-
 
 
 def get_http_resource(url, file_name):
@@ -69,8 +68,158 @@ def make_http_request(host, port, resource, file_name):
     :return: the status code
     :rtype: int
     """
-
+ 
     return 500  # Replace this "server error" with the actual status code
 
 
+def receive(data_socket, data_transfer_type):
+    """
+    Reads the body of an http body and returns it in a string
+    :param: data_socket: the iterator next_byte uses
+    :param: data_transfer_type: will be "chunked" or "content-length" depending on the data transfer
+    :return: a str containing the data from the http body
+    :author: Joe Casper
+    """
+
+    # if the type is chunked, read it with the chunked methods
+    if data_transfer_type == "chunked":
+        message = read_chunked_content(data_socket)
+
+        # if the type is content length, read it with the applicable method
+    elif data_transfer_type == "content-length":
+        message = read_content_length(data_socket)
+
+        # If the type is neither, return an error message
+    else:
+        return "Unknown data transfer type encountered: " + data_transfer_type
+
+    # returns the message, assuming the type was valid
+    return message
+
+
+def read_chunked_content(data_socket):
+    """
+    Reads the body if the data transfer type is chunked
+    :param data_socket: the iterator next_byte uses
+    :return: the body of the message, stored in a str
+    :author: Joe Casper
+    """
+    message = ''
+
+    # set a default length so the while loop works. Length is changed as the method runs.
+    length = -1
+
+    # run this loop while there are more chunks to read
+    while length != 0:
+        # read the length portion of the chunk, get the ascii value of it
+        ascii_length = get_length_of_chunk(data_socket)
+
+        # convert the ascii characters to an int value
+        length = convert_ascii_to_int(ascii_length)
+
+        # reads the chunk of data, returns it as a str, and appends it to message
+        message += read_one_chunk(data_socket, length)
+
+    return message
+
+
+def get_length_of_chunk(data_socket):
+    """
+    Reads the length section of a chunk and returns the ascii value
+    :param data_socket: iterator that next_byte uses
+    :return: the length as a bytes object
+    :author: Joe Casper
+    """
+    byte_read = b''
+    temp_byte = b''
+
+    # read the bytes until a carriage return is found
+    while temp_byte != b'\r':
+        # store the next available byte in a temporary variable
+        temp_byte = next_byte(data_socket)
+
+        # add the byte if it is not a carriage return
+        if temp_byte != b'\r':
+            byte_read += temp_byte
+
+    # advance the data_socket one character so that it is past the newline character
+    next_byte(data_socket)
+
+    # return the characters in the length section of this chunk
+    return byte_read
+
+
+def convert_ascii_to_int(bytes_obj):
+    """
+    Takes in an ascii value and converts it to an int object
+    :param bytes_obj: bytes object containing ascii characters
+    :return: the integer value of the byes object
+    :author: Joe Casper
+    """
+    # bytes to str
+    string_obj = bytes_obj.decode("ASCII")
+
+    # str to int
+    return int(string_obj, 16)
+
+
+def read_one_chunk(data_socket, length):
+    """
+    Reads a chunk of the body, returns a str of the chunk
+    :param data_socket: iterator that next_byte uses
+    :param length: The number of bytes in the chunk
+    :return: a str containing the data from the chunk
+    :author: Joe Casper
+    """
+    # create a str to hold the message
+    message = ''
+
+    # iterate through the loop for as long as the body is
+    for x in range(0, length):
+        # Read the next byte
+        byte_read = next_byte(data_socket)
+
+        # convert that byte to a str, append to message
+        message += byte_read.decode("ASCII")
+
+    return message
+
+
+def read_content_length(data_socket):
+    # TODO stub
+    return ''
+
+
+def next_byte(data_socket):
+    """
+    Read the next byte from the socket data_socket.
+
+    Read the next byte from the sender, received over the network.
+    If the byte has not yet arrived, this method blocks (waits)
+      until the byte arrives.
+    If the sender is done sending and is waiting for your response, this method blocks indefinitely.
+
+    :param data_socket: The socket to read from. The data_socket argument should be an open tcp
+                        data connection (either a client socket or a server data socket), not a tcp
+                        server's listening socket.
+    :return: the next byte, as a bytes object with a single byte in it
+    :author: Joe Casper
+    """
+    return data_socket.recv(1)
+
+
+def save_to_file(file_name, message):
+    """
+    Saves the newly decoded message in a file
+    :param: file_name: the name that will be assigned to this file
+    :param: message: the http body stored in an str
+    :author: Joe Casper
+    """
+
+    reader = open (file_name, "w")
+    reader.write(message)
+    reader.close()
+
+
 main()
+
