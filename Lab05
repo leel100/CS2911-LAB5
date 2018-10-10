@@ -22,11 +22,11 @@ def main():
     """
 
     # These resource request should result in "Content-Length" data transfer
-    get_http_resource('http://msoe.us/taylor/images/taylor.jpg','taylor.jpg')
+    get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
 
     # this resource request should result in "chunked" data transfer
-    get_http_resource('http://msoe.us/taylor/','index.html')
-    
+    get_http_resource('http://msoe.us/taylor/', 'index.html')
+
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
 
 
@@ -67,18 +67,71 @@ def make_http_request(host, port, resource, file_name):
     :param file_name: string (str) containing name of file in which to store the retrieved resource
     :return: the status code
     :rtype: int
+    :author: Lauren Lee
     """
- 
-    return 500  # Replace this "server error" with the actual status code
+
+    request = b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n'
+    data_socket = get_connection(host, port)
+    data_socket.sendall(request)
+    # THERE ARE MANY HEADERS
+    # LOOK FOR WHAT HEADER IS THE DOMAIN
+    # received = data_socket.rev(1000)
+    # print(received)
 
 
-def receive(data_socket, data_transfer_type):
+def get_connection(host, port):
+    """
+    #TODO DOC
+    :param host is the domain of the site
+    :param port is the physical port that the computer is listening
+    :return
+    :author Lauren Lee
+    """
+    data_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    data_Socket.connect((host, port))
+    return data_Socket
+
+
+def read_header(data_socket, output_file, context_length):
+    """
+    #TODO code
+    :param data_socket:
+    :return:
+    """
+
+
+def read_all_headers(data_socket):
+    """
+    #TODO code
+    #need to find the string to represent the transfer type
+    #if the contents_length need value of the type of the header
+    :return:
+    """
+    while ():
+        re  # stub
+
+
+def read_content_length(data_socket, message_length):
+    """
+    # TODO stub -ASK AND REVIEW!!!!!
+    :param data_socket:
+    :return:
+    :author: Lauren Lee
+    """
+    message = ''
+    i = message_length
+    while i > 0:
+        message += next_byte(data_socket).decode('ASCII')
+        i -= 1
+
+
+def receive(data_socket, data_transfer_type, message_length):
     """
     Reads the body of an http body and returns it in a string
     :param: data_socket: the iterator next_byte uses
     :param: data_transfer_type: will be "chunked" or "content-length" depending on the data transfer
     :return: a str containing the data from the http body
-    :author: Joe Casper
+    :author: Joe Casper (edited: Lauren-added an extra parameter) 
     """
 
     # if the type is chunked, read it with the chunked methods
@@ -87,7 +140,7 @@ def receive(data_socket, data_transfer_type):
 
         # if the type is content length, read it with the applicable method
     elif data_transfer_type == "content-length":
-        message = read_content_length(data_socket)
+        message = read_content_length(data_socket, message_length)
 
         # If the type is neither, return an error message
     else:
@@ -185,11 +238,6 @@ def read_one_chunk(data_socket, length):
     return message
 
 
-def read_content_length(data_socket):
-    # TODO stub
-    return ''
-
-
 def next_byte(data_socket):
     """
     Read the next byte from the socket data_socket.
@@ -216,10 +264,9 @@ def save_to_file(file_name, message):
     :author: Joe Casper
     """
 
-    reader = open (file_name, "w")
+    reader = open(file_name, "wb")
     reader.write(message)
     reader.close()
 
 
 main()
-
