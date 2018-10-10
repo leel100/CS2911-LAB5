@@ -87,34 +87,36 @@ def get_connection(host, port):
     :return
     :author Lauren Lee
     """
-    data_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    data_Socket.connect((host, port))
-    return data_Socket
-
-
-def read_header(data_socket, output_file, context_length):
-    """
-    #TODO code
-    :param data_socket:
-    :return:
-    """
-    while ()
+    data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    data_socket.connect((host, port))
+    return data_socket
 
 
 def read_all_headers(data_socket):
-    """
-    #TODO code
-    #need to find the string to represent the transfer type
-    #if the contents_length need value of the type of the header
-    :return: value(that is in a string)
-    """
-    value = b''
-    if value == 'counter_length':
-        # while not bytes == '\r':
-        if bytes == '\r':
-            bytes = next_byte(data_socket)
-        if bytes == '\n':
-            return int(str)(b'done')
+
+    blank_line = False
+
+
+# TODO make sure you save all header values in some way -- don't overwrite the header each time you iterate through
+    while not blank_line:
+
+        name_of_header = get_name()
+        
+        
+    if name_of_header != b'\r\n':
+        header_value = get_value()
+        
+    elif name_of_header == b'\r\n':
+        blank_line = True
+        
+def get_name():
+    
+
+
+def get_value():
+    
+
+
 
 
 def read_content_length(data_socket, message_length):
@@ -123,13 +125,14 @@ def read_content_length(data_socket, message_length):
     :param data_socket:
     :author: Lauren Lee
     """
-    message = ''
+
+    message = b''
     i = message_length
     while i > 0:
         message += next_byte(data_socket).decode('ASCII')
         i -= 1
 
-#Not sure what this does now  
+#Not sure what this does now
 # conn = get_http_resource("example.com")
 # conn.request("HEAD", "/path/tofile.txt")
 # response = conn.getresponse()
