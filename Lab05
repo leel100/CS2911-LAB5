@@ -70,7 +70,7 @@ def make_http_request(host, port, resource, file_name):
     :author: Lauren Lee
     """
 
-    request = b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n'
+    request = b'GET ' + resource + b' HTTP/1.1\r\n' + file_name + b'Host: ' + host + b'\r\n\r\n'
     data_socket = get_connection(host, port)
     data_socket.sendall(request)
     # THERE ARE MANY HEADERS
@@ -98,6 +98,7 @@ def read_header(data_socket, output_file, context_length):
     :param data_socket:
     :return:
     """
+    while ()
 
 
 def read_all_headers(data_socket):
@@ -105,22 +106,21 @@ def read_all_headers(data_socket):
     #TODO code
     #need to find the string to represent the transfer type
     #if the contents_length need value of the type of the header
-    :return:
+    :return: value(that is in a string)
     """
     value = b''
     if value == 'counter_length':
-        while not bytes == '\r':
-            value += bytes
+        # while not bytes == '\r':
+        if bytes == '\r':
             bytes = next_byte(data_socket)
-            return value
-
+        if bytes == '\n':
+            return int(str)(b'done')
 
 
 def read_content_length(data_socket, message_length):
     """
     # TODO stub -ASK AND REVIEW!!!!!
     :param data_socket:
-    :return:
     :author: Lauren Lee
     """
     message = ''
@@ -128,6 +128,13 @@ def read_content_length(data_socket, message_length):
     while i > 0:
         message += next_byte(data_socket).decode('ASCII')
         i -= 1
+
+#Not sure what this does now  
+# conn = get_http_resource("example.com")
+# conn.request("HEAD", "/path/tofile.txt")
+# response = conn.getresponse()
+# headers = response.getheaders()
+# print headers
 
 
 def receive(data_socket, data_transfer_type, message_length):
