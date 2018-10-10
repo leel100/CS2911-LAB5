@@ -107,8 +107,13 @@ def read_all_headers(data_socket):
     #if the contents_length need value of the type of the header
     :return:
     """
-    while ():
-        re  # stub
+    value = b''
+    if value == 'counter_length':
+        while not bytes == '\r':
+            value += bytes
+            bytes = next_byte(data_socket)
+            return value
+
 
 
 def read_content_length(data_socket, message_length):
@@ -131,7 +136,7 @@ def receive(data_socket, data_transfer_type, message_length):
     :param: data_socket: the iterator next_byte uses
     :param: data_transfer_type: will be "chunked" or "content-length" depending on the data transfer
     :return: a str containing the data from the http body
-    :author: Joe Casper (edited: Lauren-added an extra parameter) 
+    :author: Joe Casper (edited: Lauren-added an extra parameter)
     """
 
     # if the type is chunked, read it with the chunked methods
