@@ -69,75 +69,93 @@ def make_http_request(host, port, resource, file_name):
     :rtype: int
     :author: Lauren Lee
     """
-
-    request = b'GET ' + resource + b' HTTP/1.1\r\n' + file_name + b'Host: ' + host + b'\r\n\r\n'
+   
+    messages = b''
+    request = b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n'
     data_socket = get_connection(host, port)
     data_socket.sendall(request)
-    # THERE ARE MANY HEADERS
-    # LOOK FOR WHAT HEADER IS THE DOMAIN
-    # received = data_socket.rev(1000)
-    # print(received)
+    save_to_file(file_name, messages)
+
 
 
 def get_connection(host, port):
     """
     #TODO DOC
     :param host is the domain of the site
-    :param port is the physical port that the computer is listening
-    :return
+    :param: port is the physical port that the computer is listening
+    :return data_socket of the where the socket is
     :author Lauren Lee
     """
-    data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    data_socket.connect((host, port))
-    return data_socket
+    data_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    data_Socket.connect((host, port))
+    return data_Socket
 
 
 def read_all_headers(data_socket):
-
-    blank_line = False
-
-
-# TODO make sure you save all header values in some way -- don't overwrite the header each time you iterate through
-    while not blank_line:
-
-        name_of_header = get_name()
+    """
+    #TODO code
+    #need to find the string to represent the transfer type
+    #if the contents_length need value of the type of the header
+    :return: value(that is in a string)
+    """
+    length = b''
+    tranfer_type = b''
+    name_of_header = b' ' #need fill in something
+    while name_of_header != b'':
+        name_of_header = get_name(data_socket)
+        if name_of_header == b'Content-Length':
+            length = get_value(data_socket)
+        elif name_of_header == b'Transfer-Encoding':
+           tranfer_type = get_value(data_socket)
         
         
-    if name_of_header != b'\r\n':
-        header_value = get_value()
-        
-    elif name_of_header == b'\r\n':
-        blank_line = True
-        
-def get_name():
-    
+    return length, tranfer_type
 
 
-def get_value():
-    
+
+
+def get_name(data_socket):
+    names = b''
+    values_of_bytes = b''
+
+    while values_of_bytes != b':':
+        values_of_bytes = next_byte(data_socket)
+        if values_of_bytes == b'\r':
+            next_byte(data_socket)
+            return names
+
+        if values_of_bytes != b':':
+            names += values_of_bytes
+
+            return names
+
+
+def get_value(data_socket):
+    bytes = b''
+    values = b''
+
+    while bytes != b'\r':
+        bytes = next_byte(data_socket)
+        if bytes == b'\r':
+            next_byte(data_socket)
+            return values
+
+        values += bytes
 
 
 
 
 def read_content_length(data_socket, message_length):
     """
-    # TODO stub -ASK AND REVIEW!!!!!
+    # TODO!
     :param data_socket:
     :author: Lauren Lee
     """
-
     message = b''
     i = message_length
     while i > 0:
         message += next_byte(data_socket).decode('ASCII')
         i -= 1
-
-#Not sure what this does now
-# conn = get_http_resource("example.com")
-# conn.request("HEAD", "/path/tofile.txt")
-# response = conn.getresponse()
-# headers = response.getheaders()
-# print headers
 
 
 def receive(data_socket, data_transfer_type, message_length):
@@ -146,7 +164,7 @@ def receive(data_socket, data_transfer_type, message_length):
     :param: data_socket: the iterator next_byte uses
     :param: data_transfer_type: will be "chunked" or "content-length" depending on the data transfer
     :return: a str containing the data from the http body
-    :author: Joe Casper (edited: Lauren-added an extra parameter)
+    :author: Joe Casper (edited: Lauren-added an extra parameter-message_length)
     """
 
     # if the type is chunked, read it with the chunked methods
