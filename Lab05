@@ -69,9 +69,9 @@ def make_http_request(host, port, resource, file_name):
     :rtype: int
     :author: Lauren Lee
     """
-
+    # hold the connection of the host and port
     data_socket = get_connection(host, port)
-
+    # the format of how we need know when receiving
     request = b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n'
     data_socket.sendall(request)
 
@@ -81,7 +81,6 @@ def make_http_request(host, port, resource, file_name):
     message = receive(data_socket, data_transfer)
     # Saves the file
     save_to_file(file_name, message)
-
 
 
 def get_connection(host, port):
@@ -129,7 +128,9 @@ def get_name(data_socket):
     :return: the 'name' section
     :author: Lauren Lee
     """
+    # name is the section of the HTTP request
     name = b''
+    # holds the byte that is able to tell where the next byte will be
     byte = b''
 
     # Run loop while the byte doesn't return a ':'
@@ -158,6 +159,7 @@ def get_value(data_socket):
     :author: Lauren Lee
     """
     bytes = b''
+    # keeps track of the value
     values = b''
 
     # Skip the space that is after the colon
@@ -206,7 +208,7 @@ def read_content_length(data_socket, message_length):
     :param message_length: The length, in bytes, of the message
     :author: Joe Casper
     """
-   
+
     message = b''
 
     # message_length starts as a bytes object, so convert it to an int
