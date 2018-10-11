@@ -22,7 +22,8 @@ def main():
     """
 
     # These resource request should result in "Content-Length" data transfer
-    get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
+    # get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
+
 
     # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/', 'index.html')
@@ -69,117 +70,144 @@ def make_http_request(host, port, resource, file_name):
     :rtype: int
     :author: Lauren Lee
     """
-   
-    messages = b''
-    request = b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n'
-    data_socket = get_connection(host, port)
-    data_socket.sendall(request)
-    save_to_file(file_name, messages)
 
+    data_socket = get_connection(host, port)
+
+    request = b'GET ' + resource + b' HTTP/1.1\r\n' + b'Host: ' + host + b'\r\n\r\n'
+    data_socket.sendall(request)
+
+    # read the headers to find the transfer type
+    data_transfer = read_all_headers(data_socket)
+    # Read the body
+    message = receive(data_socket, data_transfer)
+    # Saves the file
+    save_to_file(file_name, message)
+    print("file Saved")
 
 
 def get_connection(host, port):
     """
-    #TODO DOC
     :param host is the domain of the site
     :param: port is the physical port that the computer is listening
     :return data_socket of the where the socket is
     :author Lauren Lee
     """
-    data_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    data_Socket.connect((host, port))
-    return data_Socket
+    data_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    data_socket.connect((host, port))
+    return data_socket
 
 
 def read_all_headers(data_socket):
     """
-    #TODO code
-    #need to find the string to represent the transfer type
-    #if the contents_length need value of the type of the header
-    :return: value(that is in a string)
+    # Reads all http headers to find the transfer encoding type
+    :param data_socket: iterator that next_byte uses
+    :return: transfer type
     """
-    length = b''
-    tranfer_type = b''
-    name_of_header = b' ' #need fill in something
+    transfer_type = b''
+
+    # Holds a space so that the while loop initiates
+    name_of_header = b' '
+
+    # Run while the name field doesn't return a blank object
     while name_of_header != b'':
         name_of_header = get_name(data_socket)
-        if name_of_header == b'Content-Length':
-            length = get_value(data_socket)
-        elif name_of_header == b'Transfer-Encoding':
-           tranfer_type = get_value(data_socket)
-        
-        
-    return length, tranfer_type
 
+        # We only care about the header if it tells us how the data is transferred,
+        # so check if it's one of those before saving the value
+        if name_of_header == b'Content-Length' or name_of_header == b'Transfer-Encoding':
+            transfer_type = get_value(data_socket)
 
+    # transfer_type either holds 'chunked' or an ASCII digit. This is handled when the body is read.
+    return transfer_type
 
 
 def get_name(data_socket):
-    names = b''
-    values_of_bytes = b''
+    name = b''
+    byte = b''
 
-    while values_of_bytes != b':':
-        values_of_bytes = next_byte(data_socket)
-        if values_of_bytes == b'\r':
+    # Run loop while the byte doesn't return a ':'
+    while byte != b':':
+        byte = next_byte(data_socket)
+
+        # Check if the byte is a \r. If it is, this is a blank line, and the headers are over
+        if byte == b'\r':
+            # Advance past the \n as it is not needed
             next_byte(data_socket)
-            return names
+            # Returns a blank bytes object, which signals that the headers are over
+            return name
 
-        if values_of_bytes != b':':
-            names += values_of_bytes
+        # If the byte is not a ':', append it to the name
+        if byte != b':':
+            name += byte
 
-            return names
+    return name
 
 
 def get_value(data_socket):
+    """
+    Gets the 'value' section of an http header
+    :param data_socket: iterator that next byte uses
+    :return: the 'value' section
+    """
     bytes = b''
     values = b''
 
+    # Sjip the space that is after the colon
+    next_byte(data_socket)
+
+    # run loop while the byte is not a \r
     while bytes != b'\r':
         bytes = next_byte(data_socket)
+
+        # If the byte is a \r, the value section is over
         if bytes == b'\r':
+            # Advance past the /n, as it is unneeded
             next_byte(data_socket)
+
+            # Return the data collected
             return values
 
+        # append the next byte to values
         values += bytes
 
 
-
-
-def read_content_length(data_socket, message_length):
-    """
-    # TODO!
-    :param data_socket:
-    :author: Lauren Lee
-    """
-    message = b''
-    i = message_length
-    while i > 0:
-        message += next_byte(data_socket).decode('ASCII')
-        i -= 1
-
-
-def receive(data_socket, data_transfer_type, message_length):
+def receive(data_socket, data_transfer):
     """
     Reads the body of an http body and returns it in a string
     :param: data_socket: the iterator next_byte uses
     :param: data_transfer_type: will be "chunked" or "content-length" depending on the data transfer
     :return: a str containing the data from the http body
-    :author: Joe Casper (edited: Lauren-added an extra parameter-message_length)
+    :author: Joe Casper
     """
 
     # if the type is chunked, read it with the chunked methods
-    if data_transfer_type == "chunked":
+    if data_transfer == b'chunked':
         message = read_chunked_content(data_socket)
 
-        # if the type is content length, read it with the applicable method
-    elif data_transfer_type == "content-length":
-        message = read_content_length(data_socket, message_length)
-
-        # If the type is neither, return an error message
     else:
-        return "Unknown data transfer type encountered: " + data_transfer_type
+        # If the type is content length, data_transfer = the length of the content block in bytes
+        message = read_content_length(data_socket, data_transfer)
 
-    # returns the message, assuming the type was valid
+    return message
+
+
+def read_content_length(data_socket, message_length):
+    """
+    Reads the http body when it is encoded as content length, returns the value as a str
+    :param data_socket: iterator that next_byte uses
+    :param message_length: The length, in bytes, of the message
+    :author: Joe Casper
+    """
+    message = b''
+
+    # message_length starts as a bytes object, so convert it to an int
+    int_length = convert_ascii_to_int(message_length)
+
+    # For each byte in the body, read in a byte
+    for i in range(0, int_length):
+        message += next_byte(data_socket)
+
+    # Convert the message to ascii, then return the result
     return message
 
 
@@ -200,11 +228,12 @@ def read_chunked_content(data_socket):
         # read the length portion of the chunk, get the ascii value of it
         ascii_length = get_length_of_chunk(data_socket)
 
-        # convert the ascii characters to an int value
-        length = convert_ascii_to_int(ascii_length)
+        if length != b'':
+            # convert the ascii characters to an int value
+            length = convert_ascii_to_int(ascii_length)
 
-        # reads the chunk of data, returns it as a str, and appends it to message
-        message += read_one_chunk(data_socket, length)
+            # reads the chunk of data, returns it as a str, and appends it to message
+            message += read_one_chunk(data_socket, length)
 
     return message
 
@@ -292,11 +321,10 @@ def next_byte(data_socket):
 def save_to_file(file_name, message):
     """
     Saves the newly decoded message in a file
-    :param: file_name: the name that will be assigned to this file
-    :param: message: the http body stored in an str
+    :param file_name: the name that will be assigned to this file
+    :param message: the http body stored in an str
     :author: Joe Casper
     """
-
     reader = open(file_name, "wb")
     reader.write(message)
     reader.close()
