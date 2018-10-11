@@ -23,7 +23,6 @@ def main():
 
     # These resource request should result in "Content-Length" data transfer
     get_http_resource('http://msoe.us/taylor/images/taylor.jpg', 'taylor.jpg')
-
     # this resource request should result in "chunked" data transfer
     get_http_resource('http://msoe.us/taylor/', 'index.html')
 
@@ -81,12 +80,11 @@ def make_http_request(host, port, resource, file_name):
     message = receive(data_socket, data_transfer)
     # Saves the file
     save_to_file(file_name, message)
-    print("File Saved")
+    print("file Saved")
 
 
 def get_connection(host, port):
     """
-    In order to gain connection, have to consider the TCP Server
     :param host is the domain of the site
     :param: port is the physical port that the computer is listening
     :return data_socket of the where the socket is
@@ -99,10 +97,9 @@ def get_connection(host, port):
 
 def read_all_headers(data_socket):
     """
-     Reads all http headers to find the transfer encoding type
+    # Reads all http headers to find the transfer encoding type
     :param data_socket: iterator that next_byte uses
     :return: transfer type
-    :author: Lauren Lee
     """
     transfer_type = b''
 
@@ -123,12 +120,6 @@ def read_all_headers(data_socket):
 
 
 def get_name(data_socket):
-    """
-    Gets the 'name' section of an http header
-    :param data_socket: iterator that next byte uses
-    :return: the 'name' section
-    :author: Lauren Lee
-    """
     name = b''
     byte = b''
 
@@ -155,12 +146,11 @@ def get_value(data_socket):
     Gets the 'value' section of an http header
     :param data_socket: iterator that next byte uses
     :return: the 'value' section
-    :author: Lauren Lee
     """
     bytes = b''
     values = b''
 
-    # Skip the space that is after the colon
+    # Sjip the space that is after the colon
     next_byte(data_socket)
 
     # run loop while the byte is not a \r
@@ -216,7 +206,6 @@ def read_content_length(data_socket, message_length):
     for i in range(0, int_length):
         message += next_byte(data_socket)
 
-    # Convert the message to ascii, then return the result
     return message
 
 
@@ -225,7 +214,7 @@ def read_chunked_content(data_socket):
     Reads the body if the data transfer type is chunked
     :param data_socket: the iterator next_byte uses
     :return: the body of the message, stored in a str
-    :author: Joe Casper edit: Lauren Lee
+    :author: Joe Casper
     """
     # need to be byte because was originally a string
     # if we are going to do string or bytes: need to be consistent 
@@ -239,16 +228,12 @@ def read_chunked_content(data_socket):
         # read the length portion of the chunk, get the ascii value of it
         ascii_length = get_length_of_chunk(data_socket)
 
-        if length != b'':
+        if ascii_length != b'':
             # convert the ascii characters to an int value
             length = convert_ascii_to_int(ascii_length)
 
             # reads the chunk of data, returns it as a str, and appends it to message
             message += read_one_chunk(data_socket, length)
-            # read a chunk but after each chunk there is a CRLF
-            next_byte(data_socket)
-            # check if there is a CRLF need to get them out of the way
-            next_byte(data_socket)
 
     return message
 
@@ -301,16 +286,13 @@ def read_one_chunk(data_socket, length):
     :return: a str containing the data from the chunk
     :author: Joe Casper
     """
-    # create a str to hold the message
+    # create a bytes object to hold the message
     message = b''
 
     # iterate through the loop for as long as the body is
     for x in range(0, length):
-        # Read the next byte
-        byte_read = next_byte(data_socket)
-
-        # convert that byte to a str, append to message
-        message += byte_read
+        # Read the next byte, append to message
+        message += next_byte(data_socket)
 
     return message
 
@@ -340,6 +322,8 @@ def save_to_file(file_name, message):
     :param message: the http body stored in an str
     :author: Joe Casper
     """
+    print(type(message))
+    print(file_name)
     reader = open(file_name, "wb")
     reader.write(message)
     reader.close()
